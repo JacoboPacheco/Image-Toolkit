@@ -11,10 +11,6 @@ The test images were drawn pixel by pixel in `demo.py`: a colorful "photo" with
 smooth gradients, a sun, a framed box and thin white stripes, and a cartoon house
 with large flat areas for the paint bucket.
 
-| Photo input | Cartoon input |
-| --- | --- |
-| ![photo](examples/0_input_photo.png) | ![cartoon](examples/0_input_cartoon.png) |
-
 ## Background question
 
 **Why is a pixel a tuple but a row a list?**
@@ -27,57 +23,32 @@ mutable list.
 
 ## Part 1: Photo filters
 
-### 1.1 Grayscale
+Every filter returns a new image. Example input and output for each function:
 
-Each pixel becomes `(v, v, v)` with `v = round(0.299R + 0.587G + 0.114B)`.
+| Input | `grayscale` | `invert` | `flip_horizontal` | `flip_vertical` |
+| --- | --- | --- | --- | --- |
+| ![](examples/0_input_photo.png) | ![](examples/1_1_grayscale.png) | ![](examples/1_2_invert.png) | ![](examples/1_3_flip_horizontal.png) | ![](examples/1_3_flip_vertical.png) |
+| `rotate_90` | `blur` | `pixelate`, block 4 | `pixelate`, block 8 | `pixelate`, block 16 |
+| ![](examples/1_3_rotate_90.png) | ![](examples/1_4_blur.png) | ![](examples/1_5_pixelate_4.png) | ![](examples/1_5_pixelate_8.png) | ![](examples/1_5_pixelate_16.png) |
 
-| Input | `grayscale(img)` |
-| --- | --- |
-| ![](examples/0_input_photo.png) | ![](examples/1_1_grayscale.png) |
+**1.1 Grayscale** uses `v = round(0.299R + 0.587G + 0.114B)` for every pixel.
+**1.4 Blur** averages each pixel with only the neighbors that exist, so edge
+pixels average 6 values and corners 4. **1.5 Pixelate** lets the squares on the
+right and bottom edges be smaller when the size is not a multiple of `block`.
 
-### 1.2 Invert
-
-| Input | `invert(img)` |
-| --- | --- |
-| ![](examples/0_input_photo.png) | ![](examples/1_2_invert.png) |
-
-### 1.3 Flip and rotate
-
-| Input | `flip_horizontal` | `flip_vertical` | `rotate_90` |
-| --- | --- | --- | --- |
-| ![](examples/0_input_photo.png) | ![](examples/1_3_flip_horizontal.png) | ![](examples/1_3_flip_vertical.png) | ![](examples/1_3_rotate_90.png) |
-
-**Which flip was clearer?** The slicing version of `flip_horizontal`
+**1.3 Which flip was clearer?** The slicing version of `flip_horizontal`
 (`row[::-1]`) was clearer, because one short expression says "reverse the row",
 while the loop in `flip_vertical` makes you track a backwards `range` and its
 off-by-one end value.
 
-**Where does pixel (row, col) go in `rotate_90`?** For an image with `height`
+**1.3 Where does pixel (row, col) go in `rotate_90`?** For an image with `height`
 rows, pixel `(row, col)` moves to `(col, height - 1 - row)`. The first column
 read from bottom to top becomes the first row, so the output has `width` rows
 and `height` columns (120 × 160 became 160 × 120).
 
-### 1.4 Box blur
-
-| Input | `blur(img)` |
-| --- | --- |
-| ![](examples/0_input_photo.png) | ![](examples/1_4_blur.png) |
-
-### 1.5 Pixelate
-
-| Input | `block = 4` | `block = 8` | `block = 16` |
-| --- | --- | --- | --- |
-| ![](examples/0_input_photo.png) | ![](examples/1_5_pixelate_4.png) | ![](examples/1_5_pixelate_8.png) | ![](examples/1_5_pixelate_16.png) |
-
 ### 1.6 Experiments and thinking
 
-**Blur 1, 5 and 20 times.**
-
-| 1 time | 5 times | 20 times |
-| --- | --- | --- |
-| ![](examples/1_6_blur_x1.png) | ![](examples/1_6_blur_x5.png) | ![](examples/1_6_blur_x20.png) |
-
-Each pass makes the image softer: the stripes fade and the edges of the sun and
+**Blur 1, 5 and 20 times.** Each pass makes the image softer: the stripes fade and the edges of the sun and
 the box turn into glows, but the image never becomes one solid color. A blur
 only averages a pixel with its immediate neighbors, so color spreads just one
 pixel per pass and pulls nearby pixels toward each other without erasing
@@ -86,6 +57,10 @@ large-scale differences. After 20 passes the top-left corner was still
 numbers also stops tiny changes once neighbors are almost equal. The number of
 distinct colors actually went up (14,143 → 16,769), because sharp edges get
 replaced by many in-between shades.
+
+| Blur 1 time | Blur 5 times | Blur 20 times | `flip_horizontal` then `flip_vertical` | `rotate_90` twice |
+| --- | --- | --- | --- | --- |
+| ![](examples/1_6_blur_x1.png) | ![](examples/1_6_blur_x5.png) | ![](examples/1_6_blur_x20.png) | ![](examples/1_6_flip_h_then_v.png) | ![](examples/1_6_rotate_90_x2.png) |
 
 **Is `invert(invert(img)) == img` always true? Is
 `grayscale(grayscale(img)) == grayscale(img)`?** Both are `True` in code.
@@ -98,10 +73,6 @@ times is a full 360° turn and gives back the original image (`True`). Flipping
 horizontally and then vertically sends `(row, col)` to
 `(height - 1 - row, width - 1 - col)`, which is a 180° rotation, exactly the
 same as `rotate_90` applied twice (`True`). It is not the same as the original.
-
-| `flip_horizontal` then `flip_vertical` | `rotate_90` twice |
-| --- | --- |
-| ![](examples/1_6_flip_h_then_v.png) | ![](examples/1_6_rotate_90_x2.png) |
 
 ## Part 2: Understanding color
 
@@ -152,14 +123,13 @@ starting pixel and starts the fill with an empty `visited` set.
 that takes constant time on average with a set, while a list would be scanned
 from the start on every call, getting slower as more pixels are filled.
 
-Filling the sky, the house and the grass one after another (tolerance 20):
-
 | Input | Sky filled | + house | + grass |
 | --- | --- | --- | --- |
 | ![](examples/0_input_cartoon.png) | ![](examples/3_paint_bucket_sky.png) | ![](examples/3_paint_bucket_house.png) | ![](examples/3_paint_bucket_grass.png) |
 
-The fill stops at the sun, roof, windows and door because their colors are more
-than 20 away from the target in at least one channel, and the original image was
-unchanged after each fill. A large region can need one nested call per pixel,
+The table shows the sky, the house and the grass filled one after another
+(tolerance 20). The fill stops at the sun, roof, windows and door because their
+colors are more than 20 away from the target in at least one channel, and the
+original image was unchanged after each fill. A large region can need one nested call per pixel,
 more than Python's default limit of about 1000, so `paint_bucket` raises the
 recursion limit to the number of pixels in the image.
