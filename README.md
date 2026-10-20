@@ -35,6 +35,10 @@ Pixels are always indexed as `pixels[row][col]`, which is `pixels[y][x]`.
 | File | Purpose |
 | --- | --- |
 | `helpers.py` | Provided helper functions for loading, saving and creating images |
+| `toolkit.py` | Filters (Part 1), color functions (Part 2) and the recursive paint bucket (Part 3) |
+| `demo.py` | Runs every function and the 1.6 experiments, saving images to `examples/` |
+| `examples/` | Example input and output images for each function |
+| `REPORT.md` | Written answers and example images |
 | `README.md` | This file |
 
 ### Helper functions (`helpers.py`)
@@ -117,6 +121,7 @@ from helpers import load_image, save_image
 
 ```python
 from helpers import load_image, save_image
+from toolkit import grayscale, pixelate
 
 img = load_image("photo.jpg")
 save_image(grayscale(img), "photo_gray.png")
